@@ -7,6 +7,8 @@ export const connectDB = async (): Promise<void> => {
     await mongoose.connect(uri);
 
     console.log(`✅ MongoDB connected successfully`);
+    console.log('Connection state:', mongoose.connection.readyState);
+    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
 
     mongoose.connection.on('error', error => {
       console.error('❌ MongoDB connection error:', error);

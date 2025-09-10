@@ -28,6 +28,9 @@ export class AuthService {
       if (!payload.email || !payload.name) {
         throw new Error('Missing required user information from Google');
       }
+      
+      // Log the Google ID we're extracting
+      console.log('Extracted Google ID from token (sub):', payload.sub);
 
       return {
         googleId: payload.sub,
@@ -41,6 +44,12 @@ export class AuthService {
     }
   }
 
+  /* TODO: Badly named function as it is not generating a refresh token
+    1. Change function name to generateJwtToken
+    2. Implement refresh token generation and storage
+    3. Implement refresh token endpoint in AuthController
+    4. Implement token rotation and invalidation logic
+  */
   private generateAccessToken(user: IUser): string {
     return jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: '19h',
@@ -73,6 +82,12 @@ export class AuthService {
   async signInWithGoogle(idToken: string): Promise<AuthResult> {
     try {
       const googleUserInfo = await this.verifyGoogleToken(idToken);
+      
+      // Debug log
+      console.log('Attempting sign in with Google ID:', googleUserInfo.googleId);
+      console.log('ID token sub field:', JSON.parse(
+        Buffer.from(idToken.split('.')[1], 'base64').toString()
+      ).sub);
 
       // Find existing user
       const user = await userModel.findByGoogleId(googleUserInfo.googleId);

@@ -130,12 +130,23 @@ export class UserModel {
 
   async findByGoogleId(googleId: string): Promise<IUser | null> {
     try {
+      console.log('Looking up user with Google ID:', googleId);
+      
+      // List all users in the database for debugging
+      console.log('All users in database:');
+      const allUsers = await this.user.find({});
+      allUsers.forEach(user => {
+        console.log(`- User ${user._id}: googleId=${user.googleId}, email=${user.email}`);
+      });
+      
       const user = await this.user.findOne({ googleId });
 
       if (!user) {
+        console.log('No user found with Google ID:', googleId);
         return null;
       }
 
+      console.log('Found user:', user._id, 'with Google ID:', user.googleId);
       return user;
     } catch (error) {
       console.error('Error finding user by Google ID:', error);
