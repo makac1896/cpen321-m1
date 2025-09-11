@@ -148,10 +148,19 @@ class AuthViewModel @Inject constructor(
                 .onFailure { error ->
                     val operationType = if (isSignUp) "sign up" else "sign in"
                     Log.e(TAG, "Google $operationType failed", error)
+                    
+                    // Handle specific error for deleted account
+                    val errorMessage = if (error.message?.contains("Account not found") == true && !isSignUp) {
+                        // Show guidance to switch to sign up mode for deleted accounts
+                        "Account not found. You may have deleted your account previously. Please use the SIGN UP option instead."
+                    } else {
+                        error.message
+                    }
+                    
                     _uiState.value = _uiState.value.copy(
                         isSigningIn = false,
                         isSigningUp = false,
-                        errorMessage = error.message
+                        errorMessage = errorMessage
                     )
                 }
         }
@@ -171,12 +180,27 @@ class AuthViewModel @Inject constructor(
 
     fun handleAccountDeletion() {
         viewModelScope.launch {
-            authRepository.clearToken()
-            _uiState.value = AuthUiState(
-                isAuthenticated = false,
-                isCheckingAuth = false,
-                shouldSkipAuthCheck = true // Skip auth check after manual sign out
-            )
+            // Show loading or disable UI if needed
+            
+            authRepository.deleteUser()
+                .onSuccess {
+                    // Clear local state after successful deletion
+                    _uiState.value = AuthUiState(
+                        isAuthenticated = false,
+                        isCheckingAuth = false,
+                        shouldSkipAuthCheck = true // Skip auth check after account deletion
+                    )
+                    
+                    // Navigate to auth screen with success message
+                    navigationStateManager.navigateToAuthWithMessage("Account deleted successfully")
+                }
+                .onFailure { error ->
+                    // Handle error - show error message
+                    Log.e(TAG, "Failed to delete account", error)
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = error.message ?: "Failed to delete account"
+                    )
+                }
         }
     }
 

@@ -95,12 +95,19 @@ class AuthRepositoryImpl @Inject constructor(
                 Result.success(authData)
             } else {
                 val errorBodyString = response.errorBody()?.string()
-                val errorMessage = JsonUtils.parseErrorMessage(
-                    errorBodyString,
-                    response.body()?.message ?: "Failed to sign in with Google."
-                )
-                Log.e(TAG, "Google sign in failed: $errorMessage")
-                Result.failure(Exception(errorMessage))
+                
+                // Special handling for deleted account (404 Not Found)
+                if (response.code() == 404) {
+                    Log.e(TAG, "User not found during sign in, likely deleted account")
+                    Result.failure(Exception("Account not found. You may have deleted your account previously. Please sign up again."))
+                } else {
+                    val errorMessage = JsonUtils.parseErrorMessage(
+                        errorBodyString,
+                        response.body()?.message ?: "Failed to sign in with Google."
+                    )
+                    Log.e(TAG, "Google sign in failed: $errorMessage")
+                    Result.failure(Exception(errorMessage))
+                }
             }
         } catch (e: java.net.SocketTimeoutException) {
             Log.e(TAG, "Network timeout during Google sign in", e)
@@ -200,5 +207,27 @@ class AuthRepositoryImpl @Inject constructor(
             return getCurrentUser() != null
         }
         return false
+    }
+    
+    override suspend fun deleteUser(): Result<Unit> {
+        return try {
+            val token = getStoredToken()
+            token?.let { RetrofitClient.setAuthToken(it) }
+            
+            val response = userInterface.deleteUser("") // Auth header is handled by interceptor
+            
+            if (response.isSuccessful && response.body() != null) {
+                // Clear local token after successful deletion
+                clearToken()
+                Result.success(Unit)
+            } else {
+                val errorMessage = response.errorBody()?.string() ?: "Failed to delete user"
+                Log.e(TAG, "Error deleting user: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception when deleting user", e)
+            Result.failure(e)
+        }
     }
 }
