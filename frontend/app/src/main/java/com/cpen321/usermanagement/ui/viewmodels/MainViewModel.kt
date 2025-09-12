@@ -96,7 +96,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
                 val response = lyricsInterface.getLyrics(artist, songTitle)
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
-                    if (apiResponse?.data != null) {
+                    if (apiResponse != null && apiResponse.data != null) {
                         _uiState.value = _uiState.value.copy(
                             lyricsState = _uiState.value.lyricsState.copy(
                                 lyrics = apiResponse.data.lyrics,
