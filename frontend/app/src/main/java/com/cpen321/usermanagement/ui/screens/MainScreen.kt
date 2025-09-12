@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.cpen321.usermanagement.R
+import com.cpen321.usermanagement.ui.components.LyricsScreen
 import com.cpen321.usermanagement.ui.components.MessageSnackbar
 import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.MainUiState
@@ -42,7 +43,11 @@ fun MainScreen(
         uiState = uiState,
         snackBarHostState = snackBarHostState,
         onProfileClick = onProfileClick,
-        onSuccessMessageShown = mainViewModel::clearSuccessMessage
+        onSuccessMessageShown = mainViewModel::clearSuccessMessage,
+        onArtistChange = mainViewModel::updateArtist,
+        onSongTitleChange = mainViewModel::updateSongTitle,
+        onSearchLyrics = mainViewModel::searchLyrics,
+        onClearLyrics = mainViewModel::clearLyrics
     )
 }
 
@@ -52,6 +57,10 @@ private fun MainContent(
     snackBarHostState: SnackbarHostState,
     onProfileClick: () -> Unit,
     onSuccessMessageShown: () -> Unit,
+    onArtistChange: (String) -> Unit,
+    onSongTitleChange: (String) -> Unit,
+    onSearchLyrics: () -> Unit,
+    onClearLyrics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -67,7 +76,14 @@ private fun MainContent(
             )
         }
     ) { paddingValues ->
-        MainBody(paddingValues = paddingValues)
+        MainBody(
+            paddingValues = paddingValues,
+            uiState = uiState,
+            onArtistChange = onArtistChange,
+            onSongTitleChange = onSongTitleChange,
+            onSearchLyrics = onSearchLyrics,
+            onClearLyrics = onClearLyrics
+        )
     }
 }
 
@@ -148,29 +164,24 @@ private fun MainSnackbarHost(
 @Composable
 private fun MainBody(
     paddingValues: PaddingValues,
+    uiState: MainUiState,
+    onArtistChange: (String) -> Unit,
+    onSongTitleChange: (String) -> Unit,
+    onSearchLyrics: () -> Unit,
+    onClearLyrics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(paddingValues),
-        contentAlignment = Alignment.Center
+            .padding(paddingValues)
     ) {
-        WelcomeMessage()
+        LyricsScreen(
+            lyricsState = uiState.lyricsState,
+            onArtistChange = onArtistChange,
+            onSongTitleChange = onSongTitleChange,
+            onSearch = onSearchLyrics,
+            onClear = onClearLyrics
+        )
     }
-}
-
-@Composable
-private fun WelcomeMessage(
-    modifier: Modifier = Modifier
-) {
-    val fontSizes = LocalFontSizes.current
-
-    Text(
-        text = stringResource(R.string.welcome),
-        style = MaterialTheme.typography.bodyLarge,
-        fontSize = fontSizes.extraLarge3,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier
-    )
 }
