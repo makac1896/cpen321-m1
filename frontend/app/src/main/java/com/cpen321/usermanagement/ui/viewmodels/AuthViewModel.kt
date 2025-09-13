@@ -126,8 +126,11 @@ class AuthViewModel @Inject constructor(
 
             authOperation(credential.idToken)
                 .onSuccess { authData ->
-                    val needsProfileCompletion =
-                        authData.user.bio == null || authData.user.bio.isBlank()
+                    // For new sign-ups, always direct to profile completion
+                    // For existing users, only direct if bio is missing or empty
+                    val needsProfileCompletion = isSignUp || 
+                        authData.user.bio == null || 
+                        authData.user.bio.isBlank()
 
                     _uiState.value = _uiState.value.copy(
                         isSigningIn = false,

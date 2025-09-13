@@ -88,9 +88,13 @@ fun ProfileCompletionScreen(
         }
     }
 
+    // We're limiting automatic navigation away from the bio screen
+    // to only happen for existing users who already have a bio
     LaunchedEffect(uiState.user) {
         uiState.user?.let { user ->
+            // Check if user has a non-empty bio AND hasn't just saved it now
             if (user.bio != null && user.bio.isNotBlank() && !formState.hasSavedBio) {
+                // Only auto-navigate if this is a returning user with a bio
                 onProfileCompleted()
             }
         }
