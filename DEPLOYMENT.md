@@ -2,6 +2,9 @@
 
 ## Deployment info
 
-The public IP of your back-end server: [SERVER_PUBLIC_IP]
+The public IP of your back-end server: **20.81.216.94**
 
-Domain name (if any): [SERVER_PUBLIC_NAME_OR_EMPTY]
+Domain name (if any): _(none)_
+
+- **API Base URL:** `http://20.81.216.94:3000/api/`
+- **Image Base URL:** `http://20.81.216.94:3000/`

@@ -1,73 +1,78 @@
-# CPEN 321 M1 Issues and Fixes
+# Issues Identified and Fixes
 
-## 1. Error Handling Refactoring - Auth Controller
+## 1. Delete Account Did Not Actually Remove User Data
 
-**Issue:** The original error handling in `auth.controller.ts` used nested if statements for checking error types, which is less maintainable and harder to read.
+**Problem:**  
+The "Delete Account" button originally behaved like a logout button. It never sent a `DELETE` request to the backend, meaning user accounts and data were retained. Users could re-login immediately after “deletion,” which broke expectations around data control and privacy.
 
-**Solution:** Refactored error handling to use switch statements for better readability and maintainability.
+**Fix:**
 
-**Changes:**
+- Implemented a proper `DELETE` method on the backend (`/user/profile` endpoint).
+- Updated the frontend to call this endpoint.
+- Cleared JWT tokens after deletion to prevent cached access.
+- Added error handling and a message prompting users to create a new account if they attempted to log in after deletion.
 
-- Replaced nested if-else statements with switch statements in both `signUp` and `signIn` methods
-- Example from the `signIn` method:
+**Impact:**
 
-```typescript
-// Before
-if (error instanceof Error) {
-  if (error.message === 'Invalid Google token') {
-    return res.status(401).json({
-      message: 'Invalid Google token',
-    });
-  }
+- Ensures actual data deletion, meeting user expectations.
+- Strengthens trust by giving users real control over their data.
+- Prevents unintended access to stale accounts.
 
-  if (error.message === 'User not found') {
-    return res.status(404).json({
-      message: 'User not found, please sign up first.',
-    });
-  }
+---
 
-  // ...
-}
+## 2. No Logout Button Available
 
-// After
-if (error instanceof Error) {
-  switch (error.message) {
-    case 'Invalid Google token':
-      return res.status(401).json({
-        message: 'Invalid Google token',
-      });
+**Problem:**  
+The app allowed account deletion but offered no logout option. This trapped users into staying logged in or deleting their account entirely. This omission is a poor product experience and fails to meet basic session management standards.
 
-    case 'User not found':
-      return res.status(404).json({
-        message: 'User not found, please sign up first.',
-      });
+**Fix:**
 
-    // ...
-  }
-}
-```
+- Added a logout button with proper callbacks.
+- On logout, tokens are cleared, users are redirected to the authentication screen, and a confirmation message is displayed.
 
-## 2. Google Authentication Debugging
+**Impact:**
 
-**Issue:** User authentication was failing with MongoDB operation timeout errors. Needed to debug whether the issue was with:
+- Restores expected functionality for session management.
+- Aligns the app with modern usability and security standards.
+- Prevents misuse of account deletion as a substitute for logout.
 
-1. Google ID extraction from tokens
-2. Database connection issues
-3. ID mismatch between token and database
+---
 
-**Solution:** Added temporary debugging logs to track the flow of Google IDs and database operations.
+## 3. User Bio Could Not Be Edited After Creation
 
-**Changes:**
+**Problem:**  
+The bio field was immutable after profile creation. Users who skipped setting a bio could never add one later, and those wanting to update their information were blocked. This led to a rigid and frustrating user experience.
 
-- Added logging to `verifyGoogleToken` in `auth.service.ts` to log the extracted Google ID
-- Added logging to `findByGoogleId` in `user.model.ts` to show all users in the database
-- Added connection state logging in `database.ts`
+**Fix:**
 
-**Outcome:** Logs confirmed the Google ID was correctly extracted and matched the database. The issue was with intermittent MongoDB connection timeouts rather than with the authentication logic itself.
+- Removed a modifier flag that prevented the bio text field from being focused and edited.
 
-**Future Improvements to Consider:**
+**Impact:**
 
-- Implement retry logic for database operations
-- Add more robust error handling for database connection issues
-- Consider connection pooling optimizations
-- Add monitoring for database connection health
+- Restores flexibility for users to update or add bios.
+- Improves personalization of profiles.
+- Reduces frustration for users who skipped initial setup.
+
+---
+
+## 4. Disorganized File Structure in the Backend
+
+**Problem:**  
+The backend codebase was originally a single large folder with controllers, models, and services mixed together. This made it difficult to navigate, extend, or onboard new developers.
+
+**Fix:**
+
+- Restructured the backend into a modular hierarchy:
+  - `controllers/`
+  - `services/`
+  - `models/`
+  - `routes/`
+- Updated imports to match the new structure.
+
+**Impact:**
+
+- Improves maintainability and clarity.
+- Makes adding features easier by grouping related code.
+- Speeds up developer onboarding and reduces confusion.
+
+---
